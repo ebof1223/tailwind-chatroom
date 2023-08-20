@@ -3,9 +3,18 @@ import { useState } from "react";
 
 function App() {
   const socket = io("http://localhost:3000");
-  socket.on("connect", () => {
-    console.log("connected");
-  });
+
+  const [message, setMessage] = useState("");
+
+
+  const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (message.trim()) {
+      socket.emit("message", message);
+      setMessage("");
+    }
+  };
+
   return (
     <div className="flex-1 p-2 sm:p-6 justify-between flex flex-col h-screen">
       <div className="flex sm:items-center justify-between py-3 border-b-2 border-gray-200">
@@ -155,28 +164,33 @@ function App() {
               </svg>
             </button>
           </span>
-          <input
-            type="text"
-            placeholder="Write your message!"
-            className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-12 bg-gray-200 rounded-md py-3"
-          />
-          <div className="absolute right-0 items-center inset-y-0 hidden sm:flex">
-            {/* ... same pattern for the rest of the buttons ... */}
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-lg px-4 py-3 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none"
-            >
-              <span className="font-bold">Send</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className="h-6 w-6 ml-2 transform rotate-90"
+
+          <form onSubmit={handleSendMessage} className={"w-full"}>
+            <input
+              type="text"
+              placeholder="Write your message!"
+              className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-12 bg-gray-200 rounded-md py-3"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+            <div className="absolute right-0 items-center inset-y-0 hidden sm:flex">
+              {/* ... same pattern for the rest of the buttons ... */}
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center rounded-lg px-4 py-3 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none"
               >
-                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
-              </svg>
-            </button>
-          </div>
+                <span className="font-bold">Send</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="h-6 w-6 ml-2 transform rotate-90"
+                >
+                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
+                </svg>
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

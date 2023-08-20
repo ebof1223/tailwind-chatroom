@@ -13,7 +13,7 @@ const io = new Server(httpServer, {
 });
 
 io.on("connection", (socket) => {
-	console.log("server: socket connected")
+  socket.on("message", (arg) => {
+    console.log(arg);
+  });
 });
-
-
