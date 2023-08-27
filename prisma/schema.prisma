@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider     = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model Member {
+  id           Int       @id @default(autoincrement())
+  name         String
+  avatar       String? // Optional URL to an avatar image
+  createdAt    DateTime  @default(now())
+  sentMessages Message[] @relation("SentMessages", fields: [], references: [])
+}
+
+model Message {
+  id             Int          @id @default(autoincrement())
+  message        String
+  timestamp      DateTime     @default(now())
+  senderId       Int
+  sender         Member       @relation("SentMessages", fields: [senderId], references: [id])
+  conversationId Int
+  conversation   Conversation @relation("ConversationToMessage", fields: [conversationId], references: [id])
+}
+
+model Conversation {
+  id       Int       @id @default(autoincrement())
+  messages Message[] @relation("ConversationToMessage", fields: [], references: [])
+}

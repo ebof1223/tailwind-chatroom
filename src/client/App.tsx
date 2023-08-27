@@ -3,10 +3,7 @@ import { useState } from "react";
 
 function App() {
   const socket = io("http://localhost:3000");
-
   const [message, setMessage] = useState("");
-
-
   const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (message.trim()) {
