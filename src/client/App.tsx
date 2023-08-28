@@ -5,8 +5,7 @@ import NewMemberModal from "./NewMemberModal";
 function App() {
 
   const init = {
-    senderId: 0,
-    conversationId: 0,
+    memberName: '',
     message: '',
   };
 
@@ -16,15 +15,26 @@ function App() {
   const [chatSession, setChatSession] = useState(init);
   const socket = io('http://localhost:3000');
 
-  useEffect(() => {
-    const storedMemberName = localStorage.getItem('memberName');
+  const postNewMember = async (memberName:string): Promise<void> => {
+    try {
+      const response = await fetch('/api/newMember', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberName })
+      });
 
-    if (storedMemberName) {
-      setIsOpen(false);
-      setMemberName(storedMemberName);
+      if (!response.ok) {
+        throw new Error(`Failed to create new member: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log(data)
+      // Do something with the newMember data returned from the server
+    } catch (error) {
+      console.error("There was an error creating the new member", error);
     }
-  }, []);
 
+  };
 
   const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -35,7 +45,7 @@ function App() {
   };
 
   const saveMemberName = () => {
-    localStorage.setItem('memberName', memberName);
+    postNewMember( memberName);
     setIsOpen(false);
   };
 
@@ -61,7 +71,7 @@ function App() {
               <div className="text-2xl mt-1 flex items-center">
                 <span className="text-gray-700 mr-3">Erwin Bofetiado</span>
               </div>
-              <span className="text-lg text-gray-600">Junior Developer</span>
+              <span className="text-lg text-gray-600">give me a job so I can learn rust 👨‍💻</span>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -195,7 +205,7 @@ function App() {
               <input
                 type="text"
                 placeholder="Write your message!"
-                className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-12 bg-gray-200 rounded-md py-3"
+                className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-12 bg-gray-400 rounded-md py-3"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
               />

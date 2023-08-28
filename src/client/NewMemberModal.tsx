@@ -13,20 +13,19 @@ const NewMemberModal: React.FC<NewMemberModalProps> = ({memberName, setMemberNam
     setMemberName(e.target.value);
   }
 
-  console.log(memberName);
   return (
     <>
       {isOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-opacity-10 bg-black">
-          <div className="modal-box bg-gray-200 z-50 p-8 rounded-lg shadow-lg">
-            <h3 className="mb-4 text-lg text-center text-gray-700">
+        <div className="fixed inset-0 flex items-center justify-center bg-opacity-90 bg-black">
+          <div className="modal-box bg-gray-300 z-50 p-8 rounded-lg shadow-lg">
+            <h3 className="mb-4 text-lg text-center text-gray-600">
               Haven't seen you here before..
             </h3>
             <div className="mb-6 text-center">
               <input
                 type="text"
                 placeholder="Enter name"
-                className="input w-full max-w-xs py-2 px-4 rounded text-gray-600"
+                className="input w-full max-w-xs py-2 px-4 rounded text-white-600"
                 value={memberName}
                 onChange={handleMemberNameChange}
               />
