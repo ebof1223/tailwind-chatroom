@@ -43,26 +43,5 @@ app.post('/api/newMember', async (req, res) => {
 io.on("connection", (socket) => {
   socket.on("chatSession", async (data) => {
     console.log("data:", data);
-    const { conversationId, senderId, message } = data;
-    try {
-      const newMessage = await prisma.message.create({
-        data: {
-          message: message,
-          sender: {
-            connect: {
-              id: senderId,
-            },
-          },
-          conversation: {
-            connect: {
-              id: conversationId,
-            },
-          },
-        },
-      });
-      console.log("newMessage", newMessage);
-    } catch (error) {
-      console.log("Failed to send message, ERROR:", error);
-    }
   });
 });

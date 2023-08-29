@@ -1,10 +1,11 @@
-import { io } from "socket.io-client";
 import { useState, useEffect } from "react";
 import NewMemberModal from "./NewMemberModal";
+import { Socket } from "socket.io-client";
 
-function App() {
+function App({ socket }: { socket: Socket }) {
 
   const init = {
+    memberId:'',
     memberName: '',
     message: '',
   };
@@ -13,9 +14,21 @@ function App() {
   const [memberName, setMemberName] = useState("");
   const [message, setMessage] = useState("");
   const [chatSession, setChatSession] = useState(init);
-  const socket = io('http://localhost:3000');
 
-  const postNewMember = async (memberName:string): Promise<void> => {
+  useEffect(() => {
+
+    const localName = localStorage.getItem('memberName');
+
+    if (localName){
+      setMemberName(localName);
+      setChatSession({ ...chatSession, memberName: localName });
+      setIsOpen(false);
+      //grab from db
+    } 
+
+  }, []);
+
+  const postNewMember = async (memberName: string) => {
     try {
       const response = await fetch('/api/newMember', {
         method: 'POST',
@@ -36,6 +49,7 @@ function App() {
 
   };
 
+
   const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const updatedChatSession = { ...chatSession, message: message };
@@ -45,7 +59,8 @@ function App() {
   };
 
   const saveMemberName = () => {
-    postNewMember( memberName);
+    localStorage.setItem('memberName', memberName);
+    postNewMember(memberName);
     setIsOpen(false);
   };
 
