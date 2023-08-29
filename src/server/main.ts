@@ -40,6 +40,23 @@ app.post('/api/newMember', async (req, res) => {
   }
 });
 
+app.post("/api/getMemberId", async (req, res) => {
+  const { memberName } = req.body;
+  try {
+    const member = await prisma.member.findFirst({
+      where: { name: memberName }
+    });
+    if (member) {
+      res.status(200).json({ memberId: member.id });
+    } else {
+      res.status(404).json({ error: "Member not found" });
+    }
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred while fetching memberId" });
+    console.error(error);
+  }
+});
+
 io.on("connection", (socket) => {
   socket.on("chatSession", async (data) => {
     console.log("data:", data);

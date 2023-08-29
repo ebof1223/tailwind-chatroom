@@ -1,16 +1,17 @@
 import React, { ChangeEvent } from 'react';
+import { MemberType } from './App';
 
 type NewMemberModalProps = {
-  memberName: string;
-  setMemberName: (memberName: string) => void;
+  member: MemberType;
+  setMember: React.Dispatch<React.SetStateAction<MemberType>>;
   isOpen: boolean;
-  saveMemberName: () => void;
-};
+  postNewMember: (memberName: string) => void
+};;
 
-const NewMemberModal: React.FC<NewMemberModalProps> = ({memberName, setMemberName, isOpen, saveMemberName}) => {
-  
+const NewMemberModal: React.FC<NewMemberModalProps> = ({ member, setMember, postNewMember, isOpen }) => {
+
   const handleMemberNameChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setMemberName(e.target.value);
+    setMember({ ...member, memberName: e.target.value });
   }
 
   return (
@@ -26,12 +27,13 @@ const NewMemberModal: React.FC<NewMemberModalProps> = ({memberName, setMemberNam
                 type="text"
                 placeholder="Enter name"
                 className="input w-full max-w-xs py-2 px-4 rounded text-white-600"
-                value={memberName}
+                value={member.memberName}
                 onChange={handleMemberNameChange}
               />
             </div>
             <div className="modal-action text-center">
-              <button className="btn px-4 py-2 rounded bg-blue-500 text-white mx-auto" onClick={saveMemberName}>
+              <button className="btn px-4 py-2 rounded bg-blue-500 text-white mx-auto"
+                onClick={() => postNewMember(member.memberName)}>
                 Enter
               </button>
             </div>

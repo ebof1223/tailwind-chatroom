@@ -2,30 +2,64 @@ import { useState, useEffect } from "react";
 import NewMemberModal from "./NewMemberModal";
 import { Socket } from "socket.io-client";
 
+// Define this type where both Parent and Child can import it
+export type MemberType = {
+  memberName: string,
+  memberId: number | null
+};
+
 function App({ socket }: { socket: Socket }) {
 
-  const init = {
-    memberId:'',
-    memberName: '',
-    message: '',
-  };
-
   const [isOpen, setIsOpen] = useState(true);
-  const [memberName, setMemberName] = useState("");
-  const [message, setMessage] = useState("");
-  const [chatSession, setChatSession] = useState(init);
+  const [member, setMember] = useState<MemberType>({ memberName: '', memberId: null });
+  const [message, setMessage] = useState('');
+  const [chatSession, setChatSession] = useState({ ...member, message: message });
+
 
   useEffect(() => {
+    // Declare the asynchronous function inside useEffect
+    const fetchMember = async (localName: string) => {
+      try {
+        const response = await fetch("/api/getMemberId", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ memberName: localName })
+        });
 
-    const localName = localStorage.getItem('memberName');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch memberId: ${response.statusText}`);
+        }
+        const data = await response.json();
+        console.log("data:", data);
+        return data.memberId;
 
-    if (localName){
-      setMemberName(localName);
-      setChatSession({ ...chatSession, memberName: localName });
-      setIsOpen(false);
-      //grab from db
-    } 
+      } catch (error) {
+        console.error("There was an error fetching the memberId", error);
+        return null;
+      }
+    };
 
+    // Main logic
+    const initMember = async () => {
+      const localName = localStorage.getItem('memberName');
+      if (localName) {
+        setIsOpen(false);
+        const fetchedId = await fetchMember(localName); 
+        console.log(fetchedId);
+        if (fetchedId === null) {
+          console.log("no id found");
+          return;
+        }
+
+        const memberUpdate = { memberId: fetchedId, memberName: localName };
+        console.log("memberUpdate:", memberUpdate);
+        setMember(memberUpdate);
+        setChatSession(prevSession => ({ ...prevSession, ...memberUpdate }));
+      }
+    };
+
+    // Invoke the main logic function
+    initMember();
   }, []);
 
   const postNewMember = async (memberName: string) => {
@@ -40,9 +74,8 @@ function App({ socket }: { socket: Socket }) {
         throw new Error(`Failed to create new member: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      console.log(data)
-      // Do something with the newMember data returned from the server
+      localStorage.setItem('memberName', memberName);
+      setIsOpen(false);
     } catch (error) {
       console.error("There was an error creating the new member", error);
     }
@@ -58,15 +91,11 @@ function App({ socket }: { socket: Socket }) {
     setMessage("");
   };
 
-  const saveMemberName = () => {
-    localStorage.setItem('memberName', memberName);
-    postNewMember(memberName);
-    setIsOpen(false);
-  };
 
+  const modalProps = { member, setMember, postNewMember, isOpen };
   return (
     <>
-      {isOpen && <NewMemberModal memberName={memberName} setMemberName={setMemberName} saveMemberName={saveMemberName} isOpen={isOpen} />}
+      {isOpen && <NewMemberModal {...modalProps} />}
       <div className="flex-1 p-2 sm:p-6 justify-between flex flex-col h-screen">
         <div className="flex sm:items-center justify-between py-3 border-b-2 border-gray-200">
           <div className="relative flex items-center space-x-4">
