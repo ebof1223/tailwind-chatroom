@@ -2,22 +2,41 @@ import { useState, useEffect } from "react";
 import NewMemberModal from "./NewMemberModal";
 import { Socket } from "socket.io-client";
 
-// Define this type where both Parent and Child can import it
 export type MemberType = {
   memberName: string,
   memberId: number | null
 };
 
-function App({ socket }: { socket: Socket }) {
+type Message = {
+  body: string;
+};
 
+interface Conversation {
+  id: number;
+  name: string;
+}
+
+function App({ socket }: { socket: Socket }) {
+  const [memberConversations, setMemberConversations] = useState<Conversation[]>([]);
+  const currentConversationId = 1;
   const [isOpen, setIsOpen] = useState(true);
   const [member, setMember] = useState<MemberType>({ memberName: '', memberId: null });
-  const [message, setMessage] = useState('');
-  const [chatSession, setChatSession] = useState({ ...member, message: message });
-
+  const [messageBody, setMessageBody] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
-    // Declare the asynchronous function inside useEffect
+
+    socket.on('newMessageToClient', (newMessage) => {
+      setMessages(prevMessages => [...prevMessages, newMessage]);
+    });
+
+    return () => {
+      socket.off('newMessageToClient');
+    };
+  }, []);
+
+  useEffect(() => {
+
     const fetchMember = async (localName: string) => {
       try {
         const response = await fetch("/api/getMemberId", {
@@ -30,7 +49,6 @@ function App({ socket }: { socket: Socket }) {
           throw new Error(`Failed to fetch memberId: ${response.statusText}`);
         }
         const data = await response.json();
-        console.log("data:", data);
         return data.memberId;
 
       } catch (error) {
@@ -39,26 +57,44 @@ function App({ socket }: { socket: Socket }) {
       }
     };
 
-    // Main logic
+    const fetchConversations = async (memberId: number) => {
+      try {
+        const response = await fetch("/api/getConversations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ memberId })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch conversations: ${response.statusText}`);
+        }
+        const data = await response.json();
+        console.log("data", data);
+        return data.conversations;
+
+      } catch (error) {
+        console.error("There was an error fetching the conversations", error);
+        return [];
+      }
+    };
+
     const initMember = async () => {
       const localName = localStorage.getItem('memberName');
       if (localName) {
         setIsOpen(false);
-        const fetchedId = await fetchMember(localName); 
-        console.log(fetchedId);
+        const fetchedId = await fetchMember(localName);
         if (fetchedId === null) {
           console.log("no id found");
           return;
         }
 
         const memberUpdate = { memberId: fetchedId, memberName: localName };
-        console.log("memberUpdate:", memberUpdate);
         setMember(memberUpdate);
-        setChatSession(prevSession => ({ ...prevSession, ...memberUpdate }));
+        const conversations = await fetchConversations(memberUpdate.memberId);
+        setMemberConversations(conversations);
       }
     };
 
-    // Invoke the main logic function
     initMember();
   }, []);
 
@@ -82,13 +118,12 @@ function App({ socket }: { socket: Socket }) {
 
   };
 
-
   const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const updatedChatSession = { ...chatSession, message: message };
-    socket.emit("chatSession", updatedChatSession);
-    setChatSession(updatedChatSession);
-    setMessage("");
+    const newMessage = { ...member, body: messageBody, conversationId: currentConversationId, };
+    socket.emit("newMessageToServer", newMessage);
+    setMessageBody("");
+    console.log(messages);
   };
 
 
@@ -106,7 +141,7 @@ function App({ socket }: { socket: Socket }) {
                 </svg>
               </span>
               <img
-                src="https://images.unsplash.com/photo-1549078642-b2ba4bda0cdb?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=facearea&amp;facepad=3&amp;w=144&amp;h=144"
+                src="https://avatars.githubusercontent.com/u/66833914?s=400&u=a9f1648a51ad43b06a0b8e1f0e73bfda22a9a31e&v=4"
                 alt=""
                 className="w-10 sm:w-16 h-10 sm:h-16 rounded-full"
               />
@@ -193,7 +228,7 @@ function App({ socket }: { socket: Socket }) {
                 </div>
               </div>
               <img
-                src="https://images.unsplash.com/photo-1549078642-b2ba4bda0cdb?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=facearea&amp;facepad=3&amp;w=144&amp;h=144"
+                src="https://avatars.githubusercontent.com/u/66833914?s=400&u=a9f1648a51ad43b06a0b8e1f0e73bfda22a9a31e&v=4"
                 alt="My profile"
                 className="w-6 h-6 rounded-full order-1"
               />
@@ -250,8 +285,8 @@ function App({ socket }: { socket: Socket }) {
                 type="text"
                 placeholder="Write your message!"
                 className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-12 bg-gray-400 rounded-md py-3"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                value={messageBody}
+                onChange={(e) => setMessageBody(e.target.value)}
               />
               <div className="absolute right-0 items-center inset-y-0 hidden sm:flex">
                 {/* ... same pattern for the rest of the buttons ... */}
